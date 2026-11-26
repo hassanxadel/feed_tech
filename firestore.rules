@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function myBusiness() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.businessId;
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /listings/{id} {
+      allow read: if signedIn();
+      // shortcut: any signed-in phone may (re)load the sample listings; remove `seeded` before real users.
+      allow create: if signedIn() && (request.resource.data.sellerId == myBusiness()
+                                      || request.resource.data.seeded == true);
+      allow update, delete: if signedIn() && (resource.data.sellerId == myBusiness()
+                                              || resource.data.seeded == true);
+    }
+
+    match /rfqs/{rfqId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.buyerId == myBusiness();
+      allow update: if signedIn() && resource.data.buyerId == myBusiness();
+
+      // A quote is visible only to its seller and to the buyer who asked.
+      match /quotes/{quoteId} {
+        allow read: if signedIn() && (resource.data.sellerId == myBusiness()
+          || get(/databases/$(database)/documents/rfqs/$(rfqId)).data.buyerId == myBusiness());
+        allow create: if signedIn() && request.resource.data.sellerId == myBusiness();
+      }
+    }
+
+    match /deals/{dealId} {
+      function isParty(d) { return myBusiness() in [d.buyerId, d.sellerId]; }
+
+      allow read: if signedIn() && isParty(resource.data);
+      allow create: if signedIn() && isParty(request.resource.data)
+                    && request.resource.data.status == 'negotiating';
+      // Mirrors lib/deal_rules.dart: a closed deal stays closed, and only the side
+      // that did NOT send the last price may accept or counter.
+      allow update: if signedIn() && isParty(resource.data)
+        && resource.data.status == 'negotiating'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'lastOfferBy', 'price', 'qty', 'updatedAt'])
+        && (request.resource.data.status in ['declined', 'cancelled']
+            || resource.data.lastOfferBy != myBusiness());
+
+      // Offers are the negotiation history: added, never edited or deleted.
+      match /offers/{offerId} {
+        allow read: if signedIn()
+          && isParty(get(/databases/$(database)/documents/deals/$(dealId)).data);
+        allow create: if signedIn() && request.resource.data.by == myBusiness();
+      }
+    }
+  }
+}
