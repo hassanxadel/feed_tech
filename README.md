@@ -19,11 +19,26 @@ quotes; the two negotiate and agree a deal. All data is sample data.
 - iPhone: `flutter build web` then `firebase deploy --only hosting --project <project-id>`, and open the link in Safari.
 - Before each pitch, tap **تحميل بيانات تجريبية** once: it refreshes the sample listings for 24 hours.
 
+## The pitch story (tested end to end on the web build)
+1. Phone A picks **مصنع النور** (feed mill), phone B picks **الوادي** or **الدلتا** (suppliers).
+2. Market prices: the mill taps a listing, offers a lower price → a deal opens; the supplier's **الصفقات** tab gets a badge.
+3. The supplier sends a counter-offer (**سعر جديد**); the mill accepts → **تم الاتفاق** on both phones.
+4. **طلباتي** → **اطلب عرض سعر**: the mill asks for 50 t of soybean meal; each supplier taps **قدّم سعر**;
+   the mill sees the quotes side by side, cheapest first, and accepts one.
+5. A supplier taps **نشر عرض** on the market tab: the new price appears on the mill's phone at once.
+
+Screens: account picker → home (3 tabs: أسعار السوق, طلباتي / طلبات المصانع, الصفقات) → deal; plus the post-offer form.
+Two browser tabs on one computer share one sign-in, so test the two sides on two devices (or switch accounts).
+
 ## Files
 - `lib/catalog.dart`: demo businesses (fictional), product catalogue, sample prices, seeding.
-- `lib/main.dart`: pick an account → live market prices (cheapest first, product filter).
+- `lib/main.dart`: Firebase start-up and the account picker.
+- `lib/home.dart`: the three tabs (market prices, requests for quotation, deals).
+- `lib/deal.dart`: the deal screen (negotiation history, accept / counter / decline / cancel) and its dialogs.
+- `lib/post_offer.dart`: the supplier's post-offer form and `parseAmount` (reads Arabic-Indic digits).
 - `lib/deal_rules.dart`: the deal state machine (`nextStatus`), tested in `test/deal_rules_test.dart`.
-- `firestore.rules`: server-side rules. Offers can never be edited, quotes are visible only to their seller and the buyer who asked, and deal status changes mirror `deal_rules.dart`.
+- `firestore.rules`: server-side rules. Offers can never be edited, a deal (an order or a quote) is visible only
+  to its buyer and seller, and status changes mirror `deal_rules.dart`.
 
 ## Shortcuts to undo before real users
 Each one is marked `shortcut:` in the code: anonymous sign-in (→ phone OTP), the catalogue in code (→ a `products`

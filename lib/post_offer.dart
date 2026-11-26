@@ -21,6 +21,12 @@ int? parseAmount(String text) {
   return int.tryParse(digits.toString());
 }
 
+/// Form validator for a positive whole amount.
+String? validateAmount(String? v) {
+  final n = parseAmount(v ?? '');
+  return n == null || n <= 0 ? 'اكتب رقم صحيح' : null;
+}
+
 class PostOfferScreen extends StatefulWidget {
   const PostOfferScreen({super.key, required this.seller});
   final Business seller;
@@ -49,10 +55,7 @@ class _PostOfferScreenState extends State<PostOfferScreen> {
     super.dispose();
   }
 
-  String? _positive(String? v) {
-    final n = parseAmount(v ?? '');
-    return n == null || n <= 0 ? 'اكتب رقم صحيح' : null;
-  }
+  String? _positive(String? v) => validateAmount(v);
 
   String? _minQtyCheck(String? v) {
     final error = _positive(v);

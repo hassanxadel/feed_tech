@@ -7,6 +7,13 @@ enum DealAction { counter, accept, decline, cancel }
 /// Returns the status after [action], or null when the action is not allowed.
 /// [actorMadeLastOffer] is true when the person acting sent the latest price.
 DealStatus? nextStatus(DealStatus current, DealAction action, {required bool actorMadeLastOffer}) {
-  // TODO(you): implement the rules (5-10 lines). Run `flutter test` to check.
-  throw UnimplementedError();
+  if (current != DealStatus.negotiating) return null; // agreed, declined and cancelled are final
+  return switch (action) {
+    // Only the side that received the latest price can answer it.
+    DealAction.accept => actorMadeLastOffer ? null : DealStatus.agreed,
+    DealAction.counter => actorMadeLastOffer ? null : DealStatus.negotiating,
+    DealAction.decline => actorMadeLastOffer ? null : DealStatus.declined,
+    // Either side may walk away while talks are open.
+    DealAction.cancel => DealStatus.cancelled,
+  };
 }

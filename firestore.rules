@@ -2,9 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    // Which demo business this phone acts for (written when an account is picked).
     function myBusiness() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.businessId;
     }
+    function isParty(d) { return d.buyerId == myBusiness() || d.sellerId == myBusiness(); }
 
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
@@ -13,31 +15,26 @@ service cloud.firestore {
     match /listings/{id} {
       allow read: if signedIn();
       // shortcut: any signed-in phone may (re)load the sample listings; remove `seeded` before real users.
-      allow create: if signedIn() && (request.resource.data.sellerId == myBusiness()
-                                      || request.resource.data.seeded == true);
-      allow update, delete: if signedIn() && (resource.data.sellerId == myBusiness()
-                                              || resource.data.seeded == true);
+      allow create: if signedIn() && (request.resource.data.seeded == true
+                                      || request.resource.data.sellerId == myBusiness());
+      allow update, delete: if signedIn() && (resource.data.seeded == true
+                                              || resource.data.sellerId == myBusiness());
     }
 
+    // Requests for quotation: every supplier sees them; only the buyer who asked edits them.
     match /rfqs/{rfqId} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.buyerId == myBusiness();
       allow update: if signedIn() && resource.data.buyerId == myBusiness();
-
-      // A quote is visible only to its seller and to the buyer who asked.
-      match /quotes/{quoteId} {
-        allow read: if signedIn() && (resource.data.sellerId == myBusiness()
-          || get(/databases/$(database)/documents/rfqs/$(rfqId)).data.buyerId == myBusiness());
-        allow create: if signedIn() && request.resource.data.sellerId == myBusiness();
-      }
     }
 
+    // A deal is an order on a listing or a supplier's quote on a request.
+    // Only its buyer and seller can see it, so suppliers never see each other's quotes.
     match /deals/{dealId} {
-      function isParty(d) { return myBusiness() in [d.buyerId, d.sellerId]; }
-
       allow read: if signedIn() && isParty(resource.data);
       allow create: if signedIn() && isParty(request.resource.data)
-                    && request.resource.data.status == 'negotiating';
+                    && request.resource.data.status == 'negotiating'
+                    && request.resource.data.lastOfferBy == myBusiness();
       // Mirrors lib/deal_rules.dart: a closed deal stays closed, and only the side
       // that did NOT send the last price may accept or counter.
       allow update: if signedIn() && isParty(resource.data)

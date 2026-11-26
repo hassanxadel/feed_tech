@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1093508744862",
+    "project_id": "feedtech-fabe2",
+    "storage_bucket": "feedtech-fabe2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093508744862:android:7e04020445560b32e4dd8f",
+        "android_client_info": {
+          "package_name": "com.feedtech.feedtech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGIJcrBbi_lYKc6cq_A87OloTkR4IuDmY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

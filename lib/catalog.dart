@@ -1,4 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
+final _n = NumberFormat.decimalPattern('en');
+
+/// 24900 → "24,900" (Western digits, as traders write prices on Facebook).
+String fmt(num v) => _n.format(v);
+
+Business businessById(String id) => demoBusinesses.firstWhere((b) => b.id == id);
 
 class Business {
   const Business(this.id, this.name, this.governorate, {required this.isSeller});
@@ -89,7 +97,7 @@ Future<void> seedDemoData() async {
     batch.set(
       listings.doc(),
       listingDoc(
-        seller: demoBusinesses.firstWhere((b) => b.id == sellerId),
+        seller: businessById(sellerId),
         product: demoProducts.firstWhere((p) => p.id == productId),
         spec: spec,
         price: price,
