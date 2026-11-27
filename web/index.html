@@ -1,38 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+  <!-- Replaced by the value of `flutter build web --base-href`. -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="فيد تك: سوق خامات الأعلاف. أسعار النهارده، اطلب بضاعة، اعرض بضاعتك، وفاوض على السعر.">
+  <meta name="theme-color" content="#166534">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iPhone: "إضافة إلى الشاشة الرئيسية" opens it like an app -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="feedtech">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="فيد تك">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>feedtech</title>
+  <title>فيد تك - سوق الأعلاف</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Shown while the app downloads (it can take a while on slow mobile data). */
+    html, body { margin: 0; background: #F8FAFC; }
+    #loading {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      font-family: Tahoma, Arial, sans-serif; color: #0F172A; text-align: center; padding: 24px;
+    }
+    #loading img { width: 96px; height: 96px; border-radius: 22px; }
+    #loading .title { font-size: 26px; font-weight: bold; }
+    #loading .hint { font-size: 19px; color: #475569; }
+    #loading .spin {
+      width: 44px; height: 44px; border: 5px solid #CBD5E1; border-top-color: #166534;
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { #loading .spin { animation-duration: 3s; } }
+  </style>
 </head>
 <body>
+  <div id="loading" role="status">
+    <img src="icons/Icon-192.png" alt="">
+    <div class="title">فيد تك</div>
+    <div class="spin" aria-hidden="true"></div>
+    <div class="hint">جاري التحميل… لو النت ضعيف ممكن ياخد دقيقة</div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('loading');
+      if (el) el.remove();
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

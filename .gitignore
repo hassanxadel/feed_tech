@@ -44,3 +44,9 @@ app.*.map.json
 
 # Firebase deploy cache
 .firebase/
+
+# Seed script output and installed packages
+tool/node_modules/
+tool/seed.rules
+tool/firebase.seed.json
+functions/node_modules/

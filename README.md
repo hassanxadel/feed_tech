@@ -1,45 +1,72 @@
-# FeedTech: two-phone demo
+# فيد تك (FeedTech): Egyptian feed-materials marketplace
 
-An Arabic (RTL) Flutter + Firebase demo for pitching to feed mills and suppliers.
-The story it shows: a supplier posts a price and the factory sees it at once; the factory requests
-quotes; the two negotiate and agree a deal. All data is sample data.
+A mobile-first Flutter **web** app (Arabic, right-to-left) where feed factories and raw-material
+suppliers trade soybean meal, yellow corn, soybeans and bran. Built for older users who rarely use
+smartphones: 18px+ text, 56–60px buttons, one question per screen, pickers and steppers instead of typing.
 
-## One-time setup (Firebase free Spark plan, no billing)
-1. `npm i -g firebase-tools` (if missing), then `firebase login`.
-2. In the Firebase console: create a project, then
-   - Authentication → Sign-in method → enable **Anonymous**;
-   - Firestore → create a database (closest region, e.g. `europe-west1`).
-3. `dart pub global activate flutterfire_cli`, then from this folder:
-   `flutterfire configure --project=<project-id> --platforms=android,ios,web`
-   (this replaces `lib/firebase_options.dart`).
-4. `firebase deploy --only firestore:rules --project <project-id>`
+Live: https://feedtech-fabe2.web.app
 
-## Run the demo
-- Two Android phones: `flutter run` on each (or share the APK through Firebase App Distribution).
-- iPhone: `flutter build web` then `firebase deploy --only hosting --project <project-id>`, and open the link in Safari.
-- Before each pitch, tap **تحميل بيانات تجريبية** once: it refreshes the sample listings for 24 hours.
+## Test accounts (sign-in is phone + 6-digit PIN)
+| Role | Phone | PIN | Company |
+|------|-------|-----|---------|
+| Buyer (factory) | 01000000001 | 123456 | مصنع النور للأعلاف |
+| Seller (supplier) | 01000000002 | 123456 | الدلتا لكسب الصويا |
 
-## The pitch story (tested end to end on the web build)
-1. Phone A picks **مصنع النور** (feed mill), phone B picks **الوادي** or **الدلتا** (suppliers).
-2. Market prices: the mill taps a listing, offers a lower price → a deal opens; the supplier's **الصفقات** tab gets a badge.
-3. The supplier sends a counter-offer (**سعر جديد**); the mill accepts → **تم الاتفاق** on both phones.
-4. **طلباتي** → **اطلب عرض سعر**: the mill asks for 50 t of soybean meal; each supplier taps **قدّم سعر**;
-   the mill sees the quotes side by side, cheapest first, and accepts one.
-5. A supplier taps **نشر عرض** on the market tab: the new price appears on the mill's phone at once.
+Each account opens with things to do: offers to compare and accept, a counter-offer to answer,
+an order to confirm, a stale price to update.
 
-Screens: account picker → home (3 tabs: أسعار السوق, طلباتي / طلبات المصانع, الصفقات) → deal; plus the post-offer form.
-Two browser tabs on one computer share one sign-in, so test the two sides on two devices (or switch accounts).
+## What the app does
+- **Home**: two big buttons (اطلب بضاعة / اعرض بضاعتك), "waiting for your reply" cards, today's average
+  price per material with the change from yesterday (tap for a 30-day chart, today's low/high), "your work"
+  with reply badges, and a short "what we do" list.
+- **Request goods** (8 short steps, saved as a draft on every tap): sellers of that material are notified,
+  and matching sellers are shown right away. Offers on a request are compared cheapest first, with the
+  difference from the budget, and can be accepted, countered or declined in place.
+- **Show your goods** (8 steps): one-tap "price unchanged" or a quick price/quantity update from إعلاناتي.
+  Every update is saved in `priceHistory`. A price older than 48 hours shows "سعر قديم", drops to the end
+  of results and leaves the daily average. Sellers get a daily in-app reminder.
+- **Market**: material chips, sort (cheapest / nearest / largest quantity), filter (max price, place, min quantity).
+- **Negotiation**: every offer/counter/accept/decline is a new step; nothing is overwritten. After
+  agreement the buyer completes the order (payment, day, place). Orders go new → confirmed → delivered (or
+  cancelled); each side's phone and a call button appear only after the seller confirms.
+- **Profile**: company info, logo, years, about, materials, product photos (compressed), lists, logout.
+- **Notifications**: stored in Firestore; optional phone push (needs the Blaze plan, see below).
 
-## Files
-- `lib/catalog.dart`: demo businesses (fictional), product catalogue, sample prices, seeding.
-- `lib/main.dart`: Firebase start-up and the account picker.
-- `lib/home.dart`: the three tabs (market prices, requests for quotation, deals).
-- `lib/deal.dart`: the deal screen (negotiation history, accept / counter / decline / cancel) and its dialogs.
-- `lib/post_offer.dart`: the supplier's post-offer form and `parseAmount` (reads Arabic-Indic digits).
-- `lib/deal_rules.dart`: the deal state machine (`nextStatus`), tested in `test/deal_rules_test.dart`.
-- `firestore.rules`: server-side rules. Offers can never be edited, a deal (an order or a quote) is visible only
-  to its buyer and seller, and status changes mirror `deal_rules.dart`.
+### Smart matching rules (`lib/logic.dart`, tested in `test/logic_test.dart`)
+A seller ad is a full match when: same material; specs meet the request (protein at least the minimum,
+moisture at most the maximum, origin/type equal; "مش فارقة" = any); enough quantity; the buyer reaches the
+seller's minimum order; the seller can deliver by the requested day; price at most 10% above the budget.
+Ranking: 100 points, −4 per % above budget, +1 per % below it (up to +10), −20 for a stale price,
+−10 if the seller doesn't take the buyer's payment method, +5 for the same area (transport).
+If nothing fully matches, the 5 closest ads are shown with what's missing ("متاح 40 طن بس").
 
-## Shortcuts to undo before real users
-Each one is marked `shortcut:` in the code: anonymous sign-in (→ phone OTP), the catalogue in code (→ a `products`
-collection), filtering on the phone (→ indexed queries), anyone can reload `seeded` listings.
+## Data model (Firestore)
+`materials` (catalogue + spec definitions) · `users/{uid}` (+ `private/contact` phone) · `photos` ·
+`ads` · `priceHistory` · `dailyPrices/{material}_{day}` · `requests` · `negotiations` (+ `steps`) ·
+`orders` (+ `contacts`, readable only after confirmation) · `notifications`.
+Security: `firestore.rules` (only the two parties see a negotiation or order; state changes mirror
+`lib/deal_rules.dart` and `orderMoves()`).
+
+## Commands
+```
+flutter test
+flutter build web --release --pwa-strategy=none
+firebase deploy --only hosting,firestore:rules --project feedtech-fabe2
+```
+`--pwa-strategy=none` matters: Flutter's own service worker delayed start-up by ~6 s and kept serving old
+builds after updates. The app still installs to the home screen (manifest + icons).
+
+**Seed / reset the demo data** (replaces all app data; both test accounts must exist):
+```
+cd tool && npm install && node seed.mjs
+```
+It signs in anonymously, deploys a temporary rule that lets only that sign-in write, writes 30 days of
+data (18 sellers, 10 factories, 26 ads, ~600 price updates, requests, negotiations, orders, notifications),
+and always redeploys `firestore.rules`. App icons: `python tool/make_icons.py`.
+
+## Free-plan limits and how to lift them (Blaze plan)
+- **Sign-in**: phone + PIN without SMS (Firebase SMS needs Blaze). Switch to SMS codes after upgrading.
+- **Photos**: stored compressed in Firestore (`photos`); move to Firebase Storage after upgrading.
+- **Phone push**: `functions/index.js` sends a push for each notification. Deploy with
+  `cd functions && npm install && cd .. && firebase deploy --only functions --project feedtech-fabe2`.
+- **Daily averages** are recomputed by the app on open; a scheduled Cloud Function would be stricter.

@@ -1,55 +1,128 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    // Which demo business this phone acts for (written when an account is picked).
-    function myBusiness() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.businessId;
+    // Phone + PIN accounts only (old anonymous demo sign-ins see nothing).
+    function signedIn() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
-    function isParty(d) { return d.buyerId == myBusiness() || d.sellerId == myBusiness(); }
+    function me() { return request.auth.uid; }
+    function changesOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function isParty(d) { return me() in d.parties; }
+    function nego(id) { return get(/databases/$(database)/documents/negotiations/$(id)).data; }
+    function negoAfter(id) { return getAfter(/databases/$(database)/documents/negotiations/$(id)).data; }
+    function order(id) { return get(/databases/$(database)/documents/orders/$(id)).data; }
+    function orderAfter(id) { return getAfter(/databases/$(database)/documents/orders/$(id)).data; }
+    function adAfter(id) { return getAfter(/databases/$(database)/documents/ads/$(id)).data; }
 
+    // The catalogue is managed from the console / seed script only.
+    match /materials/{id} {
+      allow read: if signedIn();
+    }
+
+    // Derived daily averages: the app saves today's figure from the live ads.
+    // shortcut: a signed-in user could write a wrong average; move to a Cloud Function on the Blaze plan.
+    match /dailyPrices/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && request.resource.data.keys().hasOnly(['materialId', 'day', 'avg', 'min', 'max', 'count', 'at'])
+        && request.resource.data.avg is int && request.resource.data.count is int
+        && id == request.resource.data.materialId + '_' + request.resource.data.day;
+    }
+
+    // Company profiles are public to signed-in users; the phone number lives in /private and is never shared directly.
     match /users/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
-    }
-
-    match /listings/{id} {
       allow read: if signedIn();
-      // shortcut: any signed-in phone may (re)load the sample listings; remove `seeded` before real users.
-      allow create: if signedIn() && (request.resource.data.seeded == true
-                                      || request.resource.data.sellerId == myBusiness());
-      allow update, delete: if signedIn() && (resource.data.seeded == true
-                                              || resource.data.sellerId == myBusiness());
-    }
-
-    // Requests for quotation: every supplier sees them; only the buyer who asked edits them.
-    match /rfqs/{rfqId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.buyerId == myBusiness();
-      allow update: if signedIn() && resource.data.buyerId == myBusiness();
-    }
-
-    // A deal is an order on a listing or a supplier's quote on a request.
-    // Only its buyer and seller can see it, so suppliers never see each other's quotes.
-    match /deals/{dealId} {
-      allow read: if signedIn() && isParty(resource.data);
-      allow create: if signedIn() && isParty(request.resource.data)
-                    && request.resource.data.status == 'negotiating'
-                    && request.resource.data.lastOfferBy == myBusiness();
-      // Mirrors lib/deal_rules.dart: a closed deal stays closed, and only the side
-      // that did NOT send the last price may accept or counter.
-      allow update: if signedIn() && isParty(resource.data)
-        && resource.data.status == 'negotiating'
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'lastOfferBy', 'price', 'qty', 'updatedAt'])
-        && (request.resource.data.status in ['declined', 'cancelled']
-            || resource.data.lastOfferBy != myBusiness());
-
-      // Offers are the negotiation history: added, never edited or deleted.
-      match /offers/{offerId} {
-        allow read: if signedIn()
-          && isParty(get(/databases/$(database)/documents/deals/$(dealId)).data);
-        allow create: if signedIn() && request.resource.data.by == myBusiness();
+      allow create, update: if me() == uid;
+      match /private/{docId} {
+        allow read, write: if me() == uid;
       }
+    }
+
+    // Compressed product photos (free-plan substitute for Storage).
+    match /photos/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.owner == me()
+        && request.resource.data.data is string && request.resource.data.data.size() < 700000;
+      allow delete: if signedIn() && resource.data.owner == me();
+    }
+
+    match /ads/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.sellerId == me();
+      allow update: if signedIn() && resource.data.sellerId == me() && request.resource.data.sellerId == me();
+      allow delete: if signedIn() && resource.data.sellerId == me();
+    }
+
+    // Every price update of an ad, written with the update itself; never edited.
+    match /priceHistory/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.sellerId == me()
+        && adAfter(request.resource.data.adId).sellerId == me();
+    }
+
+    // Buyer requests are visible to every signed-in seller; only the buyer edits them.
+    match /requests/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.buyerId == me();
+      allow update: if signedIn() && resource.data.buyerId == me() && request.resource.data.buyerId == me();
+    }
+
+    // A negotiation is private to its buyer and seller. Mirrors lib/deal_rules.dart:
+    // only the side that did NOT send the last price may accept or counter; a closed one stays closed.
+    match /negotiations/{id} {
+      allow read: if signedIn() && isParty(resource.data);
+      allow create: if signedIn()
+        && request.resource.data.parties == [request.resource.data.buyerId, request.resource.data.sellerId]
+        && request.resource.data.buyerId != request.resource.data.sellerId
+        && isParty(request.resource.data)
+        && request.resource.data.status == 'negotiating'
+        && request.resource.data.lastBy == me();
+      allow update: if signedIn() && isParty(resource.data) && (
+        (resource.data.status == 'negotiating'
+          && changesOnly(['status', 'lastBy', 'price', 'qty', 'updatedAt'])
+          && request.resource.data.status in ['negotiating', 'agreed', 'declined', 'cancelled']
+          && (request.resource.data.status == 'cancelled' || resource.data.lastBy != me())
+          && (request.resource.data.lastBy == resource.data.lastBy || request.resource.data.lastBy == me()))
+        || (resource.data.status == 'agreed' && changesOnly(['orderId', 'updatedAt'])
+          && !('orderId' in resource.data) && me() == resource.data.buyerId));
+
+      // The negotiation history: steps are only ever added.
+      match /steps/{step} {
+        allow read: if signedIn() && isParty(nego(id));
+        allow create: if signedIn() && request.resource.data.by == me() && isParty(negoAfter(id));
+      }
+    }
+
+    // Orders: created by the buyer from an agreed negotiation, at the agreed price and quantity.
+    match /orders/{id} {
+      allow read: if signedIn() && isParty(resource.data);
+      allow create: if signedIn()
+        && request.resource.data.buyerId == me()
+        && request.resource.data.status == 'new'
+        && request.resource.data.parties == [request.resource.data.buyerId, request.resource.data.sellerId]
+        && nego(request.resource.data.negotiationId).status == 'agreed'
+        && nego(request.resource.data.negotiationId).buyerId == me()
+        && nego(request.resource.data.negotiationId).sellerId == request.resource.data.sellerId
+        && nego(request.resource.data.negotiationId).price == request.resource.data.price
+        && nego(request.resource.data.negotiationId).qty == request.resource.data.qty;
+      // Mirrors orderMoves() in lib/logic.dart.
+      allow update: if signedIn() && isParty(resource.data) && changesOnly(['status', 'updatedAt']) && (
+           (resource.data.status == 'new' && request.resource.data.status == 'confirmed' && resource.data.sellerId == me())
+        || (resource.data.status == 'confirmed' && request.resource.data.status == 'delivered')
+        || (resource.data.status in ['new', 'confirmed'] && request.resource.data.status == 'cancelled'));
+
+      // Each side's phone, readable by the other side only once the seller has confirmed.
+      match /contacts/{uid} {
+        allow create, update: if signedIn() && me() == uid && isParty(orderAfter(id));
+        allow read: if signedIn() && isParty(order(id))
+          && order(id).status in ['confirmed', 'delivered'];
+      }
+    }
+
+    match /notifications/{id} {
+      allow read, delete: if signedIn() && resource.data.to == me();
+      allow update: if signedIn() && resource.data.to == me() && changesOnly(['read']);
+      allow create: if signedIn() && request.resource.data.from == me();
     }
   }
 }
