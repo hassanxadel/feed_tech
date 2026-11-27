@@ -2,13 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../data.dart';
-import '../deal_rules.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'home.dart';
-import 'profile.dart';
+import 'package:feedtech/domain/deal_rules.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/presentation/screens/home/home_screens.dart';
+import 'package:feedtech/presentation/screens/profile/profile_screens.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/services/deal_service.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_constants.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
+import 'package:feedtech/shared/utils/formatters.dart';
 
 /// "دورك ترد" / "مستني رد ..." / "اتفقتوا ✓" for a negotiation.
 class StatusLine extends StatelessWidget {

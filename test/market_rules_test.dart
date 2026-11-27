@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:feedtech/logic.dart';
+import 'package:feedtech/domain/market_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

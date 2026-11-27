@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../data.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'home.dart';
-import 'market.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/screens/home/home_screens.dart';
+import 'package:feedtech/presentation/screens/market/market_screens.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/presentation/widgets/photos.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/presentation/widgets/step_flow.dart';
+import 'package:feedtech/services/drafts_service.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/market_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_constants.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
+import 'package:feedtech/shared/utils/formatters.dart';
 
 /// Today's average price of a material from current ads (used to pre-fill price steppers).
 Future<int?> marketAverage(String materialId) async {

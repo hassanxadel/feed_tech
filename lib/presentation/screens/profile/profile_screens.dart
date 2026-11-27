@@ -2,14 +2,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../data.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'ads.dart';
-import 'deals.dart';
-import 'home.dart';
-import 'market.dart';
-import 'requests.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/screens/ads/ads_screens.dart';
+import 'package:feedtech/presentation/screens/deals/deals_screens.dart';
+import 'package:feedtech/presentation/screens/home/home_screens.dart';
+import 'package:feedtech/presentation/screens/market/market_screens.dart';
+import 'package:feedtech/presentation/screens/requests/requests_screens.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/presentation/widgets/photos.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/presentation/widgets/step_flow.dart';
+import 'package:feedtech/services/drafts_service.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_constants.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
 
 /// A company page: info, logo, product photos. Your own page also has your lists and sign-out.
 class ProfileScreen extends StatelessWidget {

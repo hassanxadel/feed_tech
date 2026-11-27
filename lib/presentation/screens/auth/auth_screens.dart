@@ -2,10 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../data.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/widgets/app_logo.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/presentation/widgets/step_flow.dart';
+import 'package:feedtech/services/drafts_service.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
 
 // Sign-in is phone number + a 6-digit PIN the user chooses (no SMS: SMS sign-in needs the Blaze plan).
 // Firebase email/password sign-in is used underneath; the phone becomes a hidden login name.

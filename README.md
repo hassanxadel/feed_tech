@@ -32,7 +32,7 @@ an order to confirm, a stale price to update.
 - **Profile**: company info, logo, years, about, materials, product photos (compressed), lists, logout.
 - **Notifications**: stored in Firestore; optional phone push (needs the Blaze plan, see below).
 
-### Smart matching rules (`lib/logic.dart`, tested in `test/logic_test.dart`)
+### Smart matching rules (`lib/domain/market_rules.dart`, tested in `test/market_rules_test.dart`)
 A seller ad is a full match when: same material; specs meet the request (protein at least the minimum,
 moisture at most the maximum, origin/type equal; "مش فارقة" = any); enough quantity; the buyer reaches the
 seller's minimum order; the seller can deliver by the requested day; price at most 10% above the budget.
@@ -40,12 +40,25 @@ Ranking: 100 points, −4 per % above budget, +1 per % below it (up to +10), −
 −10 if the seller doesn't take the buyer's payment method, +5 for the same area (transport).
 If nothing fully matches, the 5 closest ads are shown with what's missing ("متاح 40 طن بس").
 
+## Code layout (`lib/`)
+```
+main.dart, firebase_options.dart
+domain/        pure business rules, no UI or network: market_rules.dart, deal_rules.dart (unit-tested)
+models/        commodity.dart (materials catalogue), me.dart (signed-in business)
+services/      Firestore reads and writes: queries, market (requests/ads), deals (negotiations/orders),
+               notifications, drafts, photos, firebase_service (db, myUid, Json types)
+shared/        constants/ (app_theme, app_constants: places, payments, roles), utils/formatters.dart
+presentation/  widgets/ (shared UI, auth_gate) and screens/<feature>/ (auth, home, market, ads,
+               requests, deals, profile, notifications)
+```
+`domain/`, `models/`, `services/` and `shared/` never import from `presentation/`.
+
 ## Data model (Firestore)
 `materials` (catalogue + spec definitions) · `users/{uid}` (+ `private/contact` phone) · `photos` ·
 `ads` · `priceHistory` · `dailyPrices/{material}_{day}` · `requests` · `negotiations` (+ `steps`) ·
 `orders` (+ `contacts`, readable only after confirmation) · `notifications`.
 Security: `firestore.rules` (only the two parties see a negotiation or order; state changes mirror
-`lib/deal_rules.dart` and `orderMoves()`).
+`lib/domain/deal_rules.dart` and `orderMoves()`).
 
 ## Commands
 ```

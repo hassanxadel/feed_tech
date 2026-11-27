@@ -1,4 +1,4 @@
-import 'package:feedtech/deal_rules.dart';
+import 'package:feedtech/domain/deal_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Only the cases with one right answer. Add tests for your own policy choices.

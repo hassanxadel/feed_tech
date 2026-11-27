@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../data.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'ads.dart';
-import 'deals.dart';
-import 'home.dart';
-import 'profile.dart';
-import 'requests.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/screens/ads/ads_screens.dart';
+import 'package:feedtech/presentation/screens/deals/deals_screens.dart';
+import 'package:feedtech/presentation/screens/home/home_screens.dart';
+import 'package:feedtech/presentation/screens/profile/profile_screens.dart';
+import 'package:feedtech/presentation/screens/requests/requests_screens.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/presentation/widgets/photos.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_constants.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
+import 'package:feedtech/shared/utils/formatters.dart';
 
 /// Browse sellers' ads: pick a material, sort, and (optionally) filter by price, place and quantity.
 class MarketScreen extends StatefulWidget {

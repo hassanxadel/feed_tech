@@ -4,16 +4,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'ads.dart';
-import 'deals.dart';
-import 'market.dart';
-import 'notifications.dart';
-import 'profile.dart';
-import 'requests.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/screens/ads/ads_screens.dart';
+import 'package:feedtech/presentation/screens/deals/deals_screens.dart';
+import 'package:feedtech/presentation/screens/market/market_screens.dart';
+import 'package:feedtech/presentation/screens/notifications/notifications_screen.dart';
+import 'package:feedtech/presentation/screens/profile/profile_screens.dart';
+import 'package:feedtech/presentation/screens/requests/requests_screens.dart';
+import 'package:feedtech/presentation/widgets/app_logo.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
+import 'package:feedtech/shared/utils/formatters.dart';
 
 void open(BuildContext context, Widget screen) =>
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));

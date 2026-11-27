@@ -67,7 +67,7 @@ service cloud.firestore {
       allow update: if signedIn() && resource.data.buyerId == me() && request.resource.data.buyerId == me();
     }
 
-    // A negotiation is private to its buyer and seller. Mirrors lib/deal_rules.dart:
+    // A negotiation is private to its buyer and seller. Mirrors lib/domain/deal_rules.dart:
     // only the side that did NOT send the last price may accept or counter; a closed one stays closed.
     match /negotiations/{id} {
       allow read: if signedIn() && isParty(resource.data);
@@ -105,7 +105,7 @@ service cloud.firestore {
         && nego(request.resource.data.negotiationId).sellerId == request.resource.data.sellerId
         && nego(request.resource.data.negotiationId).price == request.resource.data.price
         && nego(request.resource.data.negotiationId).qty == request.resource.data.qty;
-      // Mirrors orderMoves() in lib/logic.dart.
+      // Mirrors orderMoves() in lib/domain/market_rules.dart.
       allow update: if signedIn() && isParty(resource.data) && changesOnly(['status', 'updatedAt']) && (
            (resource.data.status == 'new' && request.resource.data.status == 'confirmed' && resource.data.sellerId == me())
         || (resource.data.status == 'confirmed' && request.resource.data.status == 'delivered')

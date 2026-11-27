@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 
-import '../data.dart';
-import '../deal_rules.dart';
-import '../logic.dart';
-import '../theme.dart';
-import '../widgets.dart';
-import 'ads.dart';
-import 'deals.dart';
-import 'home.dart';
-import 'market.dart';
-import 'profile.dart';
+import 'package:feedtech/domain/deal_rules.dart';
+import 'package:feedtech/domain/market_rules.dart';
+import 'package:feedtech/models/commodity.dart';
+import 'package:feedtech/models/me.dart';
+import 'package:feedtech/presentation/screens/ads/ads_screens.dart';
+import 'package:feedtech/presentation/screens/deals/deals_screens.dart';
+import 'package:feedtech/presentation/screens/home/home_screens.dart';
+import 'package:feedtech/presentation/screens/market/market_screens.dart';
+import 'package:feedtech/presentation/screens/profile/profile_screens.dart';
+import 'package:feedtech/presentation/widgets/feedback.dart';
+import 'package:feedtech/presentation/widgets/info_widgets.dart';
+import 'package:feedtech/presentation/widgets/pickers.dart';
+import 'package:feedtech/presentation/widgets/step_flow.dart';
+import 'package:feedtech/services/deal_service.dart';
+import 'package:feedtech/services/drafts_service.dart';
+import 'package:feedtech/services/firebase_service.dart';
+import 'package:feedtech/services/market_service.dart';
+import 'package:feedtech/services/queries.dart';
+import 'package:feedtech/shared/constants/app_constants.dart';
+import 'package:feedtech/shared/constants/app_theme.dart';
+import 'package:feedtech/shared/utils/formatters.dart';
 
 Want wantOf(Json r) => Want(
       materialId: r['materialId'] as String,
