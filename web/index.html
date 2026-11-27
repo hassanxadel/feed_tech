@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!-- No dir="rtl" here: Flutter lays out right-to-left itself, and an RTL page makes iPhone Safari
+     shift the app sideways (the left part was cut off). Only the loading message is RTL. -->
+<html lang="ar">
 <head>
   <!-- Replaced by the value of `flutter build web --base-href`. -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Same as the tag Flutter installs at start-up, so the page never zooms or jumps. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="فيد تك: سوق خامات الأعلاف. أسعار النهارده، اطلب بضاعة، اعرض بضاعتك، وفاوض على السعر.">
   <meta name="theme-color" content="#166534">
 
@@ -22,7 +25,10 @@
 
   <style>
     /* Shown while the app downloads (it can take a while on slow mobile data). */
-    html, body { margin: 0; background: #F8FAFC; }
+    html, body { margin: 0; background: #F8FAFC; width: 100%; height: 100%; overflow: hidden; }
+    /* Flutter marks the page dir="rtl" (Arabic) at start-up. The app draws right-to-left by itself;
+       keeping the page's own box left-to-right stops iPhone Safari from shifting the app sideways. */
+    html { direction: ltr !important; }
     #loading {
       position: fixed; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 18px;
@@ -40,7 +46,7 @@
   </style>
 </head>
 <body>
-  <div id="loading" role="status">
+  <div id="loading" role="status" dir="rtl">
     <img src="icons/Icon-192.png" alt="">
     <div class="title">فيد تك</div>
     <div class="spin" aria-hidden="true"></div>
@@ -51,6 +57,8 @@
       var el = document.getElementById('loading');
       if (el) el.remove();
     });
+    // iPhone Safari can leave the page scrolled after the keyboard closes; put it back.
+    window.addEventListener('focusout', function () { window.scrollTo(0, 0); });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
